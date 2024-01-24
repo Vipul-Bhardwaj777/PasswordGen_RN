@@ -1,6 +1,17 @@
-import {Alert, StyleSheet, Text, View} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import React, {useState} from 'react';
 import * as Yup from 'yup';
+import {Formik} from 'formik';
+import BouncyCheckbox from 'react-native-bouncy-checkbox';
 
 const passwordSchema = Yup.object().shape({
   passwordLength: Yup.number()
@@ -15,7 +26,7 @@ const Main = () => {
   const [lowerCase, setLowerCase] = useState(true);
   const [upperCase, setUpperCase] = useState(false);
   const [numbers, setNumbers] = useState(false);
-  const [symbols, setSymbols] = useState(true);
+  const [symbols, setSymbols] = useState(false);
 
   const createPassword = (charString, passwordLength) => {
     let result = '';
@@ -56,12 +67,127 @@ const Main = () => {
     setIsPasswordGenerated(true);
   };
 
-  useEffect(() => generatePasswordString(16), []);
+  const resetPassword = () => {
+    setPassword('');
+    setIsPasswordGenerated(false);
+    setLowerCase(true);
+    setUpperCase(false);
+    setNumbers(false);
+    setSymbols(false);
+  };
 
   return (
-    <View>
-      <Text>main</Text>
-    </View>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      style={{
+        backgroundColor: '#1f2937',
+      }}>
+      <SafeAreaView style={styles.appContainer}>
+        <View style={styles.formContainer}>
+          <Text style={styles.title}>Password Generator</Text>
+
+          <Formik
+            initialValues={{passwordLength: ''}}
+            validationSchema={passwordSchema}
+            onSubmit={values => {
+              generatePasswordString(Number(values.passwordLength));
+            }}>
+            {({
+              values,
+              errors,
+              touched,
+              isValid,
+              handleChange,
+              handleSubmit,
+              handleReset,
+              /* and other goodies */
+            }) => (
+              <>
+                <View style={styles.inputWrapper}>
+                  <View style={{flexDirection: 'column'}}>
+                    <Text style={styles.heading}>Password Length</Text>
+                    {touched.passwordLength && errors.passwordLength && (
+                      <Text style={styles.errorText}>
+                        {errors.passwordLength}
+                      </Text>
+                    )}
+                  </View>
+                  <TextInput
+                    style={styles.inputStyle}
+                    value={values.passwordLength}
+                    onChangeText={handleChange('passwordLength')}
+                    placeholder="Give length"
+                    keyboardType="numeric"
+                    placeholderTextColor="#ffffff"
+                  />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.heading}>Include Lowercase</Text>
+                  <BouncyCheckbox
+                    disableBuiltInState
+                    isChecked={lowerCase}
+                    onPress={() => setLowerCase(!lowerCase)}
+                    fillColor="#a855f7"
+                  />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.heading}>Include upperCase</Text>
+                  <BouncyCheckbox
+                    disableBuiltInState
+                    isChecked={upperCase}
+                    onPress={() => setUpperCase(!upperCase)}
+                    fillColor="#10b981"
+                  />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.heading}>Include symbols</Text>
+                  <BouncyCheckbox
+                    disableBuiltInState
+                    isChecked={symbols}
+                    onPress={() => setSymbols(!symbols)}
+                    fillColor="#ec4899"
+                  />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.heading}>Include numbers</Text>
+                  <BouncyCheckbox
+                    disableBuiltInState
+                    isChecked={numbers}
+                    onPress={() => setNumbers(!numbers)}
+                    fillColor="#3b82f6"
+                  />
+                </View>
+
+                <View style={styles.formActions}>
+                  <TouchableOpacity
+                    style={styles.primaryBtn}
+                    onPress={handleSubmit}>
+                    <Text style={styles.primaryBtnTxt}>Generate Password</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.secondaryBtn}
+                    onPress={() => {
+                      handleReset();
+                      resetPassword();
+                    }}>
+                    <Text style={styles.secondaryBtnTxt}>Reset</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </Formik>
+        </View>
+
+        {isPasswordGenerated ? (
+          <View style={[styles.card, styles.cardElevated]}>
+            <Text style={styles.description}>Long press to copy</Text>
+            <Text selectable style={styles.generatedPassword}>
+              {password}
+            </Text>
+          </View>
+        ) : null}
+      </SafeAreaView>
+    </ScrollView>
   );
 };
 
@@ -70,15 +196,18 @@ export default Main;
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
+    paddingVertical: 40,
   },
   formContainer: {
     margin: 8,
     padding: 8,
+    marginBottom: 40,
   },
   title: {
     fontSize: 32,
     fontWeight: '600',
     marginBottom: 15,
+    color: '#ffffff',
   },
   subTitle: {
     fontSize: 26,
@@ -91,6 +220,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 15,
+    color: '#ffffff',
   },
   inputWrapper: {
     marginBottom: 15,
@@ -98,15 +228,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flexDirection: 'row',
   },
-  inputColumn: {
-    flexDirection: 'column',
-  },
+
   inputStyle: {
-    padding: 8,
+    padding: 6,
     width: '30%',
     borderWidth: 1,
     borderRadius: 4,
-    borderColor: '#16213e',
+    borderColor: '#ffffff',
+    color: '#ffffff',
   },
   errorText: {
     fontSize: 12,
@@ -130,13 +259,15 @@ const styles = StyleSheet.create({
   },
   secondaryBtn: {
     width: 120,
-    padding: 10,
     borderRadius: 8,
     marginHorizontal: 8,
-    backgroundColor: '#CAD5E2',
+    backgroundColor: '#c084fc',
+    justifyContent: 'center',
   },
   secondaryBtnTxt: {
     textAlign: 'center',
+    color: '#ffffff',
+    fontWeight: '700',
   },
   card: {
     padding: 12,
